@@ -18,15 +18,18 @@ export default function Navigation() {
   ];
 
   const scrollToSection = (hash: string) => {
-    if (hash) {
-      const element = document.querySelector(hash);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
     setMobileMenuOpen(false);
+    
+    setTimeout(() => {
+      if (hash) {
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 100);
   };
 
   return (
