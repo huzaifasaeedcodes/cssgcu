@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import Home from "@/pages/Home";
 import NotFound from "@/pages/not-found";
 
@@ -29,6 +30,7 @@ function App() {
               <Router />
             </main>
             <Footer />
+            <ScrollToTop />
           </div>
           <Toaster />
         </TooltipProvider>

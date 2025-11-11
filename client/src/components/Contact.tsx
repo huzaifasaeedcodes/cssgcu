@@ -6,14 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
-    alert("Thank you for your message! We'll get back to you soon.");
+    
+    toast({
+      title: "Message Sent!",
+      description: "Thank you for your message! We'll get back to you soon.",
+    });
+    
     setFormData({ name: "", email: "", message: "" });
   };
 
