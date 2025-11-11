@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MapPin, Users } from "lucide-react";
+import EventRegistrationForm from "./EventRegistrationForm";
+import GallerySlider from "./GallerySlider";
 import codingWorkshop from "@assets/generated_images/Coding_workshop_event_photo_7009c1be.png";
 import hackathon from "@assets/generated_images/Hackathon_event_photo_7f37422b.png";
 import techSeminar from "@assets/generated_images/Tech_seminar_event_photo_aeb8bc06.png";
@@ -17,6 +19,12 @@ const pastEvents = [
     image: codingWorkshop,
     description: "Hands-on workshop covering modern web development with React and Node.js",
     attendees: 120,
+    gallery: [
+      { src: codingWorkshop, alt: "Workshop overview", caption: "Students learning modern web development" },
+      { src: hackathon, alt: "Coding session", caption: "Hands-on React coding" },
+      { src: techSeminar, alt: "Presentation", caption: "Instructor explaining concepts" },
+      { src: aiWorkshop, alt: "Group work", caption: "Team collaboration" },
+    ],
   },
   {
     id: 2,
@@ -25,6 +33,12 @@ const pastEvents = [
     image: hackathon,
     description: "48-hour coding marathon where teams built innovative solutions",
     attendees: 85,
+    gallery: [
+      { src: hackathon, alt: "Hackathon venue", caption: "Teams competing at Tech Taakra 2024" },
+      { src: codingWorkshop, alt: "Team coding", caption: "Intensive coding session" },
+      { src: techSeminar, alt: "Presentations", caption: "Final project presentations" },
+      { src: aiWorkshop, alt: "Winners", caption: "Award ceremony" },
+    ],
   },
   {
     id: 3,
@@ -33,6 +47,12 @@ const pastEvents = [
     image: techSeminar,
     description: "Expert talk on the latest trends in artificial intelligence",
     attendees: 200,
+    gallery: [
+      { src: techSeminar, alt: "Seminar hall", caption: "Full auditorium at AI seminar" },
+      { src: aiWorkshop, alt: "Speaker presenting", caption: "Industry expert sharing insights" },
+      { src: codingWorkshop, alt: "Q&A session", caption: "Interactive discussion" },
+      { src: hackathon, alt: "Audience", caption: "Engaged participants" },
+    ],
   },
 ];
 
@@ -49,7 +69,8 @@ const upcomingEvents = [
 ];
 
 export default function Events() {
-  const [showRegistration, setShowRegistration] = useState(false);
+  const [registrationEvent, setRegistrationEvent] = useState<string | null>(null);
+  const [selectedGallery, setSelectedGallery] = useState<number | null>(null);
 
   return (
     <section className="py-20" id="events">
@@ -99,7 +120,7 @@ export default function Events() {
                     </div>
                     <Button
                       className="w-full"
-                      onClick={() => setShowRegistration(true)}
+                      onClick={() => setRegistrationEvent(event.title)}
                       data-testid={`button-register-${event.id}`}
                     >
                       Register Now
@@ -126,33 +147,48 @@ export default function Events() {
                       <span>{event.date}</span>
                     </div>
                     <p className="text-muted-foreground mb-4">{event.description}</p>
-                    <div className="flex items-center gap-2 text-sm text-accent-foreground bg-accent/10 px-3 py-1 rounded-md">
+                    <div className="flex items-center gap-2 text-sm text-accent-foreground bg-accent/10 px-3 py-1 rounded-md mb-4">
                       <Users className="h-4 w-4" />
                       <span>{event.attendees} attendees</span>
                     </div>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setSelectedGallery(event.id)}
+                      data-testid={`button-view-gallery-${event.id}`}
+                    >
+                      View Gallery
+                    </Button>
                   </div>
                 </Card>
               ))}
             </div>
+
+            {selectedGallery && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
+                <Card className="max-w-4xl w-full p-6 my-8">
+                  <GallerySlider
+                    images={pastEvents.find(e => e.id === selectedGallery)?.gallery || []}
+                    title={pastEvents.find(e => e.id === selectedGallery)?.title || ""}
+                  />
+                  <Button
+                    onClick={() => setSelectedGallery(null)}
+                    className="w-full mt-6"
+                    data-testid="button-close-gallery"
+                  >
+                    Close Gallery
+                  </Button>
+                </Card>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
-        {showRegistration && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-md w-full p-6">
-              <h3 className="text-2xl font-semibold mb-4">Event Registration</h3>
-              <p className="text-muted-foreground mb-4">
-                Registration form coming soon! For now, please contact us at css@gcu.edu.pk
-              </p>
-              <Button
-                onClick={() => setShowRegistration(false)}
-                className="w-full"
-                data-testid="button-close-registration"
-              >
-                Close
-              </Button>
-            </Card>
-          </div>
+        {registrationEvent && (
+          <EventRegistrationForm
+            eventTitle={registrationEvent}
+            onClose={() => setRegistrationEvent(null)}
+          />
         )}
       </div>
     </section>

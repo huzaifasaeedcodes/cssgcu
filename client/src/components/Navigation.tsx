@@ -2,19 +2,32 @@ import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { name: "Home", path: "/" },
-    { name: "About Us", path: "/about" },
-    { name: "Events", path: "/events" },
-    { name: "Team", path: "/team" },
-    { name: "Announcements", path: "/announcements" },
-    { name: "Contact", path: "/contact" },
+    { name: "Home", path: "/", hash: "" },
+    { name: "About", path: "/", hash: "#about" },
+    { name: "Events", path: "/", hash: "#events" },
+    { name: "Team", path: "/", hash: "#team" },
+    { name: "Announcements", path: "/", hash: "#announcements" },
+    { name: "Contact", path: "/", hash: "#contact" },
   ];
+
+  const scrollToSection = (hash: string) => {
+    if (hash) {
+      const element = document.querySelector(hash);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
@@ -32,34 +45,34 @@ export default function Navigation() {
 
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
+              <button
+                key={item.name}
+                onClick={() => scrollToSection(item.hash)}
                 data-testid={`link-nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <Button
-                  variant={location === item.path ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   className="relative"
                 >
                   {item.name}
-                  {location === item.path && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-primary rounded-full" />
-                  )}
                 </Button>
-              </Link>
+              </button>
             ))}
+            <ThemeToggle />
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            data-testid="button-mobile-menu"
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              data-testid="button-mobile-menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -67,19 +80,19 @@ export default function Navigation() {
         <div className="md:hidden border-t bg-background">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                key={item.name}
+                onClick={() => scrollToSection(item.hash)}
                 data-testid={`link-mobile-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                className="w-full"
               >
                 <Button
-                  variant={location === item.path ? "secondary" : "ghost"}
+                  variant="ghost"
                   className="w-full justify-start"
                 >
                   {item.name}
                 </Button>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
