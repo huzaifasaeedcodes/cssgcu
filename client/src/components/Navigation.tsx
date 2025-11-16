@@ -38,7 +38,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-3 hover-elevate active-elevate-2 px-2 py-1 rounded-md">
             <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">CS</span>
+              <span className="text-primary-foreground font-bold text-xl">CSS</span>
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-sm leading-tight">Computer Science Society</span>
