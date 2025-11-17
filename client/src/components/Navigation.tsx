@@ -48,19 +48,16 @@ export default function Navigation() {
 
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
-              <button
+              <Button
                 key={item.name}
                 onClick={() => scrollToSection(item.hash)}
                 data-testid={`link-nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                variant="ghost"
+                size="sm"
+                className="relative"
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative"
-                >
-                  {item.name}
-                </Button>
-              </button>
+                {item.name}
+              </Button>
             ))}
             <ThemeToggle />
           </div>
@@ -83,19 +80,15 @@ export default function Navigation() {
         <div className="md:hidden border-t bg-background">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navItems.map((item) => (
-              <button
+              <Button
                 key={item.name}
                 onClick={() => scrollToSection(item.hash)}
                 data-testid={`link-mobile-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className="w-full"
+                variant="ghost"
+                className="w-full justify-start"
               >
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                >
-                  {item.name}
-                </Button>
-              </button>
+                {item.name}
+              </Button>
             ))}
           </div>
         </div>
