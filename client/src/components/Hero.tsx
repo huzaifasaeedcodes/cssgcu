@@ -74,7 +74,6 @@ const Hero: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log("Registration saved:", data);
 
       toast({
         title: "Registration Submitted!",
@@ -84,7 +83,6 @@ const Hero: React.FC = () => {
       setFormData({ name: "", roll_number: "", department: "", phone: "" });
       setIsModalOpen(false);
     } catch (error) {
-      console.error(error);
       toast({
         title: "Error",
         description: "Failed to submit registration. Please try again.",
