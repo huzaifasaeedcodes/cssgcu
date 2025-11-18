@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
-import { SiGithub } from "react-icons/si";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 

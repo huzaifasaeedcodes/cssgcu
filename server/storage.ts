@@ -1,5 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
+import { v4 as uuidv4 } from "uuid";
 import {
   type User,
   type InsertUser,
@@ -9,34 +10,57 @@ import {
   type InsertTeamMember,
   type Announcement,
   type InsertAnnouncement,
+  type Registration,
+  type InsertRegistration,
+  type Message,
+  type InsertMessage,
   users,
   events,
   teamMembers,
   announcements,
+  registrations,
+  messages,
 } from "@shared/schema";
 
 export interface IStorage {
+  // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
+  // Events
   getAllEvents(): Promise<Event[]>;
   getEvent(id: string): Promise<Event | undefined>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: string, event: Partial<InsertEvent>): Promise<Event | undefined>;
   deleteEvent(id: string): Promise<boolean>;
 
+  // Team Members
   getAllTeamMembers(): Promise<TeamMember[]>;
   getTeamMember(id: string): Promise<TeamMember | undefined>;
   createTeamMember(member: InsertTeamMember): Promise<TeamMember>;
   updateTeamMember(id: string, member: Partial<InsertTeamMember>): Promise<TeamMember | undefined>;
   deleteTeamMember(id: string): Promise<boolean>;
 
+  // Announcements
   getAllAnnouncements(): Promise<Announcement[]>;
   getAnnouncement(id: string): Promise<Announcement | undefined>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: string, announcement: Partial<InsertAnnouncement>): Promise<Announcement | undefined>;
   deleteAnnouncement(id: string): Promise<boolean>;
+
+  // Registrations
+  getAllRegistrations(): Promise<Registration[]>;
+  getRegistration(id: string): Promise<Registration | undefined>;
+  createRegistration(registration: InsertRegistration): Promise<Registration>;
+
+  // Messages
+  getMessage(id: string): Promise<Message | undefined>;
+  getMessagesBySender(senderId: string): Promise<Message[]>;
+  getMessagesByReceiver(receiverId: string): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessageAsRead(id: string): Promise<Message | undefined>;
+  deleteMessage(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -52,10 +76,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // If your DB supports returning(), prefer:
-    // const [created] = await db.insert(users).values(insertUser).returning();
-    await db.insert(users).values(insertUser);
-    return insertUser as unknown as User;
+    const newUser = { ...insertUser, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(users).values(newUser);
+    return newUser as User;
   }
 
   // =================== Events ===================
@@ -69,12 +92,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {
-    await db.insert(events).values(event);
-    return event as unknown as Event;
+    const newEvent = { ...event, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(events).values(newEvent);
+    return newEvent as Event;
   }
 
   async updateEvent(id: string, event: Partial<InsertEvent>): Promise<Event | undefined> {
-    await db.update(events).set({ ...event, updatedAt: new Date() }).where(eq(events.id, id));
+    const updatedEvent = { ...event, updatedAt: new Date() };
+    await db.update(events).set(updatedEvent).where(eq(events.id, id));
     return this.getEvent(id);
   }
 
@@ -96,12 +121,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTeamMember(member: InsertTeamMember): Promise<TeamMember> {
-    await db.insert(teamMembers).values(member);
-    return member as unknown as TeamMember;
+    const newMember = { ...member, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(teamMembers).values(newMember);
+    return newMember as TeamMember;
   }
 
   async updateTeamMember(id: string, member: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
-    await db.update(teamMembers).set({ ...member, updatedAt: new Date() }).where(eq(teamMembers.id, id));
+    const updatedMember = { ...member, updatedAt: new Date() };
+    await db.update(teamMembers).set(updatedMember).where(eq(teamMembers.id, id));
     return this.getTeamMember(id);
   }
 
@@ -123,12 +150,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
-    await db.insert(announcements).values(announcement);
-    return announcement as unknown as Announcement;
+    const newAnnouncement = { ...announcement, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(announcements).values(newAnnouncement);
+    return newAnnouncement as Announcement;
   }
 
   async updateAnnouncement(id: string, announcement: Partial<InsertAnnouncement>): Promise<Announcement | undefined> {
-    await db.update(announcements).set({ ...announcement, updatedAt: new Date() }).where(eq(announcements.id, id));
+    const updatedAnnouncement = { ...announcement, updatedAt: new Date() };
+    await db.update(announcements).set(updatedAnnouncement).where(eq(announcements.id, id));
     return this.getAnnouncement(id);
   }
 
@@ -136,6 +165,54 @@ export class DatabaseStorage implements IStorage {
     const existing = await this.getAnnouncement(id);
     if (!existing) return false;
     await db.delete(announcements).where(eq(announcements.id, id));
+    return true;
+  }
+
+  // =================== Registrations ===================
+  async getAllRegistrations(): Promise<Registration[]> {
+    return await db.select().from(registrations);
+  }
+
+  async getRegistration(id: string): Promise<Registration | undefined> {
+    const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
+    return result[0] as Registration | undefined;
+  }
+
+  async createRegistration(registration: InsertRegistration): Promise<Registration> {
+    const newRegistration = { ...registration, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(registrations).values(newRegistration);
+    return newRegistration as Registration;
+  }
+
+  // =================== Messages ===================
+  async getMessage(id: string): Promise<Message | undefined> {
+    const result = await db.select().from(messages).where(eq(messages.id, id)).limit(1);
+    return result[0] as Message | undefined;
+  }
+
+  async getMessagesBySender(senderId: string): Promise<Message[]> {
+    return await db.select().from(messages).where(eq(messages.senderId, senderId));
+  }
+
+  async getMessagesByReceiver(receiverId: string): Promise<Message[]> {
+    return await db.select().from(messages).where(eq(messages.receiverId, receiverId));
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const newMessage = { ...message, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
+    await db.insert(messages).values(newMessage);
+    return newMessage as Message;
+  }
+
+  async markMessageAsRead(id: string): Promise<Message | undefined> {
+    await db.update(messages).set({ read: 1, updatedAt: new Date() }).where(eq(messages.id, id));
+    return this.getMessage(id);
+  }
+
+  async deleteMessage(id: string): Promise<boolean> {
+    const existing = await this.getMessage(id);
+    if (!existing) return false;
+    await db.delete(messages).where(eq(messages.id, id));
     return true;
   }
 }

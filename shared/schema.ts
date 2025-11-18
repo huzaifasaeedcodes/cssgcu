@@ -3,12 +3,14 @@ import { mysqlTable, varchar, text, int, timestamp } from "drizzle-orm/mysql-cor
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// -------------------- Users --------------------
 export const users = mysqlTable("users", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   username: text("username").notNull(),
   password: text("password").notNull(),
 });
 
+// -------------------- Events --------------------
 export const events = mysqlTable("events", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   title: text("title").notNull(),
@@ -21,6 +23,7 @@ export const events = mysqlTable("events", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// -------------------- Team Members --------------------
 export const teamMembers = mysqlTable("team_members", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   name: text("name").notNull(),
@@ -33,6 +36,7 @@ export const teamMembers = mysqlTable("team_members", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// -------------------- Announcements --------------------
 export const announcements = mysqlTable("announcements", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   title: text("title").notNull(),
@@ -43,6 +47,29 @@ export const announcements = mysqlTable("announcements", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// -------------------- Registrations --------------------
+export const registrations = mysqlTable("registrations", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
+  name: text("name").notNull(),
+  roll_number: text("roll_number").notNull(),
+  department: text("department").notNull(),
+  phone: text("phone").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// -------------------- Messages --------------------
+export const messages = mysqlTable("messages", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
+  senderId: varchar("sender_id", { length: 36 }).notNull(), // FK to users.id
+  receiverId: varchar("receiver_id", { length: 36 }).notNull(), // FK to users.id
+  content: text("content").notNull(),
+  read: int("read").default(0).notNull(), // 0 = unread, 1 = read
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// -------------------- Zod Schemas --------------------
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -69,14 +96,37 @@ export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
   createdAt: true,
   updatedAt: true,
 });
-
 export const selectAnnouncementSchema = createSelectSchema(announcements);
 
+export const insertRegistrationSchema = createInsertSchema(registrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export const selectRegistrationSchema = createSelectSchema(registrations);
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export const selectMessageSchema = createSelectSchema(messages);
+
+// -------------------- TypeScript Types --------------------
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
+
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 export type Announcement = typeof announcements.$inferSelect;
+
+export type InsertRegistration = z.infer<typeof insertRegistrationSchema>;
+export type Registration = typeof registrations.$inferSelect;
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
