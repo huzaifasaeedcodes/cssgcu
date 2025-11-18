@@ -5,10 +5,9 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const socialLinks = [
-    { icon: Facebook, label: "Facebook", href: "#" },
-    { icon: Instagram, label: "Instagram", href: "#" },
-    { icon: Linkedin, label: "LinkedIn", href: "#" },
-    { icon: SiGithub, label: "GitHub", href: "#" },
+    { icon: Facebook, label: "Facebook", href: "https://www.facebook.com/CSSGCU/" },
+    { icon: Instagram, label: "Instagram", href: "https://www.instagram.com/css.gcu/?hl=en" },
+    { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/company/computer-science-society-gcu/" },
   ];
 
   return (
@@ -77,7 +76,7 @@ export default function Footer() {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p>© {currentYear} Computer Science Society, GCU Lahore. All rights reserved.</p>
-          <p className="mt-2">Built for Tech Taakra 2025 Web Development Competition</p>
+          <p className="mt-2">Built for Tech Taakra 2025 By<i> Muhammad Salman</i> and <i>Huzaifa Saeed</i></p>
         </div>
       </div>
     </footer>

@@ -31,10 +31,10 @@ export default function Contact() {
   ];
 
   const socialLinks = [
-    { icon: Facebook, label: "Facebook", href: "#" },
-    { icon: Instagram, label: "Instagram", href: "#" },
-    { icon: Linkedin, label: "LinkedIn", href: "#" },
-    { icon: SiGithub, label: "GitHub", href: "#" },
+    { icon: Facebook, label: "Facebook", href: "https://www.facebook.com/CSSGCU/" },
+    { icon: Instagram, label: "Instagram", href: "https://www.instagram.com/css.gcu/?hl=en" },
+    { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/company/computer-science-society-gcu/" },
+    
   ];
 
   return (

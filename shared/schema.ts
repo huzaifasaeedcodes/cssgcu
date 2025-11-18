@@ -1,16 +1,16 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer } from "drizzle-orm/pg-core";
+import { mysqlTable, varchar, text, int, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
+export const users = mysqlTable("users", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
+  username: text("username").notNull(),
   password: text("password").notNull(),
 });
 
-export const events = pgTable("events", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const events = mysqlTable("events", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   title: text("title").notNull(),
   description: text("description").notNull(),
   date: text("date").notNull(),
@@ -21,20 +21,20 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const teamMembers = pgTable("team_members", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const teamMembers = mysqlTable("team_members", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   name: text("name").notNull(),
   role: text("role").notNull(),
   bio: text("bio"),
   image: text("image"),
   socialLinks: text("social_links"),
-  order: integer("order").default(0).notNull(),
+  order: int("order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const announcements = pgTable("announcements", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const announcements = mysqlTable("announcements", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
   title: text("title").notNull(),
   content: text("content").notNull(),
   type: text("type").notNull(),
