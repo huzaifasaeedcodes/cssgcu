@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, X } from "lucide-react";
-import heroImage from "@assets/generated_images/GCU_Lahore_campus_hero_cf930b50.png";
+import heroImage from "/attached_assets/generated_images/GCU_Lahore_campus_hero_cf930b50.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

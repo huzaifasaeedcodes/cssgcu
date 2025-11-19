@@ -7,44 +7,6 @@ import { insertContactMessageSchema } from "@shared/schema";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-const demoEvents = [
-  {
-    title: "Tech Taakra 2025",
-    description: "Annual flagship event featuring workshops, competitions, and tech talks from industry experts.",
-    date: "2025-03-15",
-    location: "GCU Main Auditorium",
-    image: "/attached_assets/generated_images/Hackathon_event_photo_7f37422b.png",
-    registrationLink: "#",
-  },
-  {
-    title: "AI Workshop Series",
-    description: "Learn the fundamentals of artificial intelligence and machine learning in this hands-on workshop series.",
-    date: "2025-02-20",
-    location: "Computer Lab 3",
-    image: "/attached_assets/generated_images/AI_workshop_upcoming_event_6d681b05.png",
-    registrationLink: "#",
-  },
-  {
-    title: "Coding Bootcamp",
-    description: "Intensive coding bootcamp covering web development, algorithms, and software engineering principles.",
-    date: "2025-04-10",
-    location: "CS Department",
-    image: "/attached_assets/generated_images/Coding_workshop_event_photo_7009c1be.png",
-    registrationLink: "#",
-  },
-];
-
-async function seedDemoEvents() {
-  const existingEvents = await storage.getAllEvents();
-  if (existingEvents.length === 0) {
-    console.log("No events found. Seeding demo events...");
-    for (const event of demoEvents) {
-      await storage.createEvent(event);
-    }
-    console.log("Demo events seeded successfully!");
-  }
-}
-
 function verifyAdminPassword(req: any, res: any, next: any) {
   const { adminPassword } = req.body;
   
@@ -59,7 +21,7 @@ function verifyAdminPassword(req: any, res: any, next: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.json());
-  await seedDemoEvents();
+
 
   app.get("/api/events", async (req, res) => {
     try {
