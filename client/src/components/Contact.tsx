@@ -10,19 +10,42 @@ import { useToast } from "@/hooks/use-toast";
 export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for your message! We'll get back to you soon.",
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const response = await fetch('http://localhost:5000/api/contact', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
     });
-    
-    setFormData({ name: "", email: "", message: "" });
-  };
 
+    if (response.ok) {
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for your message! We'll get back to you soon.",
+      });
+      setFormData({ name: "", email: "", message: "" });
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to send message');
+    }
+  } catch (error) {
+    console.error('Contact form error:', error);
+    toast({
+      title: "Error",
+      description: "Failed to send message. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
   const contactInfo = [
     { icon: Mail, label: "Email", value: "css@gcu.edu.pk" },
     { icon: Phone, label: "Phone", value: "+92 300 1234567" },
@@ -124,8 +147,13 @@ export default function Contact() {
                   data-testid="input-message"
                 />
               </div>
-              <Button type="submit" className="w-full" data-testid="button-submit-contact">
-                Send Message
+              <Button 
+                type="submit" 
+                className="w-full" 
+                data-testid="button-submit-contact"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Message"}
               </Button>
             </form>
           </Card>

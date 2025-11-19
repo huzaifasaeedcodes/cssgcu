@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertEventSchema, insertTeamMemberSchema, insertAnnouncementSchema,insertRegistrationSchema } from "@shared/schema";
+import { insertContactMessageSchema } from "@shared/schema";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -264,6 +265,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: "Invalid registration data" });
     }
   });
+  app.post("/api/contact", async (req, res) => {
+  try {
+    const validated = insertContactMessageSchema.parse(req.body);
+    const contactMessage = await storage.createContactMessage(validated);
+    res.status(201).json(contactMessage);
+  } catch (error) {
+    console.error("Contact form error:", error);
+    res.status(400).json({ error: "Invalid contact message data" });
+  }
+});
+
+app.get("/api/contact", verifyAdminPassword, async (req, res) => {
+  try {
+    const messages = await storage.getAllContactMessages();
+    res.json(messages);
+  } catch (error) {
+    console.error("Failed to fetch contact messages:", error);
+    res.status(500).json({ error: "Failed to fetch contact messages" });
+  }
+});
+
+app.get("/api/contact/:id", verifyAdminPassword, async (req, res) => {
+  try {
+    const message = await storage.getContactMessage(req.params.id);
+    if (!message) {
+      return res.status(404).json({ error: "Contact message not found" });
+    }
+    res.json(message);
+  } catch (error) {
+    console.error("Failed to fetch contact message:", error);
+    res.status(500).json({ error: "Failed to fetch contact message" });
+  }
+});
+
+app.delete("/api/contact/:id", verifyAdminPassword, async (req, res) => {
+  try {
+    const success = await storage.deleteContactMessage(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Contact message not found" });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete contact message:", error);
+    res.status(500).json({ error: "Failed to delete contact message" });
+  }
+});
 
 
   const httpServer = createServer(app);

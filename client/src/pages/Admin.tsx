@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash2, Edit } from "lucide-react";
-import type { Event, TeamMember, Announcement } from "@shared/schema";
+import { Plus, Trash2, Edit, Mail } from "lucide-react";
+import type { Event, TeamMember, Announcement, ContactMessage } from "@shared/schema";
 
 async function apiRequest(url: string, options: RequestInit = {}) {
   const response = await fetch(url, {
@@ -54,6 +54,13 @@ export default function Admin() {
     queryFn: () => apiRequest('/api/announcements'),
   });
 
+  // Contact messages query
+  const { data: contactMessages = [] } = useQuery<ContactMessage[]>({
+    queryKey: ['contactMessages'],
+    queryFn: () => apiRequest('/api/contact'),
+  });
+
+  // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/events', {
       method: 'POST',
@@ -93,6 +100,7 @@ export default function Admin() {
     onError: (error: Error) => setError(error.message),
   });
 
+  // Team member mutations
   const createMemberMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/team-members', {
       method: 'POST',
@@ -132,6 +140,7 @@ export default function Admin() {
     onError: (error: Error) => setError(error.message),
   });
 
+  // Announcement mutations
   const createAnnouncementMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/announcements', {
       method: 'POST',
@@ -166,6 +175,19 @@ export default function Admin() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setError("");
+    },
+    onError: (error: Error) => setError(error.message),
+  });
+
+  // Contact message mutation
+  const deleteContactMessageMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ adminPassword }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
       setError("");
     },
     onError: (error: Error) => setError(error.message),
@@ -255,6 +277,7 @@ export default function Admin() {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="announcements">Announcements</TabsTrigger>
             <TabsTrigger value="team">Team Members</TabsTrigger>
+            <TabsTrigger value="contact">Contact Messages</TabsTrigger>
           </TabsList>
 
           <TabsContent value="events" className="space-y-4">
@@ -497,6 +520,74 @@ export default function Admin() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="contact" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Contact Messages</h2>
+              <div className="text-sm text-muted-foreground">
+                {contactMessages.length} message{contactMessages.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {contactMessages.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <p className="text-muted-foreground">No contact messages yet.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                contactMessages.map((message) => (
+                  <Card key={message.id} className="relative">
+                    <CardHeader>
+                      <CardTitle className="flex justify-between items-start">
+                        <div>
+                          <span className="text-lg">{message.name}</span>
+                          <p className="text-sm font-normal text-muted-foreground mt-1">
+                            {message.email}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            asChild
+                          >
+                            <a href={`mailto:${message.email}`}>
+                              <Mail className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteContactMessageMutation.mutate(message.id)}
+                            disabled={!adminPassword}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{message.message}</p>
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          Received: {new Date(message.createdAt).toLocaleDateString()} at{' '}
+                          {new Date(message.createdAt).toLocaleTimeString()}
+                        </p>
+                        <a 
+                          href={`mailto:${message.email}?subject=Re: Your message to CSS GCU&body=Dear ${message.name},%0D%0A%0D%0AThank you for your message...`}
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          Reply via Email
+                        </a>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>
