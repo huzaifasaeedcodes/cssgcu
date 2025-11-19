@@ -107,7 +107,7 @@ export default function Events() {
                     <Card key={event.id} className="overflow-hidden hover-elevate active-elevate-2" data-testid={`card-past-event-${event.id}`}>
                       {event.image && (
                         <img
-                          src={event.image}
+                          src={`/attached_assets/generated_images/${event.image}`}
                           alt={event.title}
                           className="w-full h-48 object-cover"
                         />
