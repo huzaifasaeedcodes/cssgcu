@@ -69,6 +69,16 @@ export const messages = mysqlTable("messages", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// -------------------- Contact Messages --------------------
+export const contactMessages = mysqlTable("contact_messages", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`UUID()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // -------------------- Zod Schemas --------------------
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -112,6 +122,14 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 });
 export const selectMessageSchema = createSelectSchema(messages);
 
+export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const selectContactMessageSchema = createSelectSchema(contactMessages);
+
 // -------------------- TypeScript Types --------------------
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -130,3 +148,6 @@ export type Registration = typeof registrations.$inferSelect;
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+export type ContactMessage = typeof contactMessages.$inferSelect;

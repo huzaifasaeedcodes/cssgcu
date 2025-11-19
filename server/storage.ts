@@ -14,12 +14,15 @@ import {
   type InsertRegistration,
   type Message,
   type InsertMessage,
+  type ContactMessage,
+  type InsertContactMessage,
   users,
   events,
   teamMembers,
   announcements,
   registrations,
   messages,
+  contactMessages, // Add this import
 } from "@shared/schema";
 
 export interface IStorage {
@@ -61,6 +64,12 @@ export interface IStorage {
   createMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(id: string): Promise<Message | undefined>;
   deleteMessage(id: string): Promise<boolean>;
+
+  // Contact Messages
+  getAllContactMessages(): Promise<ContactMessage[]>;
+  getContactMessage(id: string): Promise<ContactMessage | undefined>;
+  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+  deleteContactMessage(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -213,6 +222,34 @@ export class DatabaseStorage implements IStorage {
     const existing = await this.getMessage(id);
     if (!existing) return false;
     await db.delete(messages).where(eq(messages.id, id));
+    return true;
+  }
+
+  // =================== Contact Messages ===================
+  async getAllContactMessages(): Promise<ContactMessage[]> {
+    return await db.select().from(contactMessages);
+  }
+
+  async getContactMessage(id: string): Promise<ContactMessage | undefined> {
+    const result = await db.select().from(contactMessages).where(eq(contactMessages.id, id)).limit(1);
+    return result[0] as ContactMessage | undefined;
+  }
+
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const newMessage = { 
+      ...message, 
+      id: uuidv4(), 
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    };
+    await db.insert(contactMessages).values(newMessage);
+    return newMessage as ContactMessage;
+  }
+
+  async deleteContactMessage(id: string): Promise<boolean> {
+    const existing = await this.getContactMessage(id);
+    if (!existing) return false;
+    await db.delete(contactMessages).where(eq(contactMessages.id, id));
     return true;
   }
 }
