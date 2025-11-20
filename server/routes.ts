@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertEventSchema, insertTeamMemberSchema, insertAnnouncementSchema,insertRegistrationSchema } from "@shared/schema";
 import { insertContactMessageSchema } from "@shared/schema";
 
+
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 function verifyAdminPassword(req: any, res: any, next: any) {

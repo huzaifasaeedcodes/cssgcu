@@ -198,8 +198,8 @@ async createRegistration(registration: InsertRegistration): Promise<Registration
   const newRegistration = { 
     ...registration, 
     id: uuidv4(), 
-    createdAt: new Date(), 
-    updatedAt: new Date() 
+    created_at: new Date(), 
+    updated_at: new Date() 
   };
 
   await db.insert(registrations).values(newRegistration);
