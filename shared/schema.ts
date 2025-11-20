@@ -54,8 +54,9 @@ export const registrations = mysqlTable("registrations", {
   roll_number: text("roll_number").notNull(),
   department: text("department").notNull(),
   phone: text("phone").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  event_title: text("event_title").notNull(), // added event_title
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // -------------------- Messages --------------------
@@ -110,8 +111,8 @@ export const selectAnnouncementSchema = createSelectSchema(announcements);
 
 export const insertRegistrationSchema = createInsertSchema(registrations).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
+  created_at: true,
+  updated_at: true,
 });
 export const selectRegistrationSchema = createSelectSchema(registrations);
 

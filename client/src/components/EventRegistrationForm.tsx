@@ -16,7 +16,7 @@ export default function EventRegistrationForm({ eventTitle, onClose }: EventRegi
   const [formData, setFormData] = useState({
     name: "",
     rollNo: "",
-    email: "",
+    department: "",
     phone: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,56 +26,72 @@ export default function EventRegistrationForm({ eventTitle, onClose }: EventRegi
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!formData.rollNo.trim()) {
-      newErrors.rollNo = "Roll number is required";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone)) {
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.rollNo.trim()) newErrors.rollNo = "Roll number is required";
+    if (!formData.department.trim()) newErrors.department = "Department is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    else if (!/^\+?[\d\s-()]+$/.test(formData.phone))
       newErrors.phone = "Invalid phone number";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
+  e.preventDefault();
+  if (!validateForm()) return;
+
+  // Extra check to ensure eventTitle exists
+  if (!eventTitle || !eventTitle.trim()) {
+    toast({
+      title: "Error",
+      description: "Event title is missing. Please try again.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    const payload = {
+      name: formData.name.trim(),
+      roll_number: formData.rollNo.trim(),
+      department: formData.department.trim(),
+      phone: formData.phone.trim(),
+      event_title: eventTitle.trim(),
+    };
+
+    const response = await fetch("/api/registrations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err?.error || "Failed to submit registration");
     }
 
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log("Registration submitted:", { event: eventTitle, ...formData });
-    
-    setIsSubmitting(false);
+    const data = await response.json();
+    console.log("Registration saved:", data);
+
     setIsSuccess(true);
-    
     toast({
       title: "Registration Successful!",
       description: `You've been registered for ${eventTitle}`,
     });
 
-    setTimeout(() => {
-      onClose();
-    }, 2000);
-  };
+    setTimeout(() => onClose(), 2000);
+  } catch (error: any) {
+    toast({
+      title: "Error",
+      description: error.message || "Failed to submit registration",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (isSuccess) {
     return (
@@ -99,103 +115,53 @@ export default function EventRegistrationForm({ eventTitle, onClose }: EventRegi
             <h3 className="text-2xl font-semibold mb-1">Event Registration</h3>
             <p className="text-sm text-muted-foreground">{eventTitle}</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            data-testid="button-close-registration-form"
-          >
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">
-              Full Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="John Doe"
-              data-testid="input-reg-name"
-              className={errors.name ? "border-destructive" : ""}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive mt-1">{errors.name}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="rollNo">
-              Roll Number <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="rollNo"
-              value={formData.rollNo}
-              onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
-              placeholder="BSCS-2021-001"
-              data-testid="input-reg-rollno"
-              className={errors.rollNo ? "border-destructive" : ""}
-            />
-            {errors.rollNo && (
-              <p className="text-sm text-destructive mt-1">{errors.rollNo}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="email">
-              Email Address <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="student@gcu.edu.pk"
-              data-testid="input-reg-email"
-              className={errors.email ? "border-destructive" : ""}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phone">
-              Phone Number <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+92 300 1234567"
-              data-testid="input-reg-phone"
-              className={errors.phone ? "border-destructive" : ""}
-            />
-            {errors.phone && (
-              <p className="text-sm text-destructive mt-1">{errors.phone}</p>
-            )}
-          </div>
+          {["name", "rollNo", "department", "phone"].map((field) => (
+            <div key={field}>
+              <Label htmlFor={field}>
+                {field === "name"
+                  ? "Full Name"
+                  : field === "rollNo"
+                  ? "Roll Number"
+                  : field === "department"
+                  ? "Department"
+                  : "Phone Number"}{" "}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id={field}
+                type={field === "phone" ? "tel" : "text"}
+                value={(formData as any)[field]}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, [field]: e.target.value }))
+                }
+                placeholder={
+                  field === "name"
+                    ? "John Doe"
+                    : field === "rollNo"
+                    ? "BSCS-2021-001"
+                    : field === "department"
+                    ? "BSCS, BBA, etc."
+                    : "+92 300 1234567"
+                }
+                className={errors[field] ? "border-destructive" : ""}
+              />
+              {errors[field] && (
+                <p className="text-sm text-destructive mt-1">{errors[field]}</p>
+              )}
+            </div>
+          ))}
 
           <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              data-testid="button-cancel-registration"
-            >
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting}
-              data-testid="button-submit-registration"
-            >
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
               {isSubmitting ? "Registering..." : "Register"}
             </Button>
           </div>

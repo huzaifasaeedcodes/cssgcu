@@ -218,15 +218,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/registrations", async (req, res) => {
-    try {
-      const validated = insertRegistrationSchema.parse(req.body);
-      const registration = await storage.createRegistration(validated);
-      res.status(201).json(registration);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid registration data" });
-    }
-  });
+ app.post("/api/registrations", async (req, res) => {
+  try {
+    const validated = insertRegistrationSchema.parse(req.body);
+
+    const registration = await storage.createRegistration(validated);
+    res.status(201).json(registration);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || "Invalid registration data" });
+  }
+});
+
   app.post("/api/contact", async (req, res) => {
   try {
     const validated = insertContactMessageSchema.parse(req.body);

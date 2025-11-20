@@ -177,21 +177,34 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
-  // =================== Registrations ===================
-  async getAllRegistrations(): Promise<Registration[]> {
-    return await db.select().from(registrations);
+ // =================== Registrations ===================
+// =================== Registrations ===================
+// Add this in DatabaseStorage
+async getAllRegistrations(): Promise<Registration[]> {
+  return await db.select().from(registrations);
+}
+
+async getRegistration(id: string): Promise<Registration | undefined> {
+  const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
+  return result[0] as Registration | undefined;
+}
+
+async createRegistration(registration: InsertRegistration): Promise<Registration> {
+  // Ensure event_title exists
+  if (!registration.event_title || !registration.event_title.trim()) {
+    throw new Error("Event title is required");
   }
 
-  async getRegistration(id: string): Promise<Registration | undefined> {
-    const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
-    return result[0] as Registration | undefined;
-  }
+  const newRegistration = { 
+    ...registration, 
+    id: uuidv4(), 
+    createdAt: new Date(), 
+    updatedAt: new Date() 
+  };
 
-  async createRegistration(registration: InsertRegistration): Promise<Registration> {
-    const newRegistration = { ...registration, id: uuidv4(), createdAt: new Date(), updatedAt: new Date() };
-    await db.insert(registrations).values(newRegistration);
-    return newRegistration as Registration;
-  }
+  await db.insert(registrations).values(newRegistration);
+  return newRegistration as Registration;
+}
 
   // =================== Messages ===================
   async getMessage(id: string): Promise<Message | undefined> {
