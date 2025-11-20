@@ -70,7 +70,7 @@ export default function Admin() {
     refetch: refetchContacts,
     isFetching: isFetchingContacts,
   } = useQuery<ContactMessage[]>({
-    queryKey: ['contactMessages', adminPassword],
+    queryKey: ['contactMessages'],
     queryFn: () =>
       apiRequest('/api/contact', {
         headers: {
@@ -85,7 +85,7 @@ export default function Admin() {
     refetch: refetchRegistrations,
     isFetching: isFetchingRegistrations,
   } = useQuery<Registration[]>({
-    queryKey: ['registrations', adminPassword],
+    queryKey: ['registrations'],
     queryFn: () =>
       apiRequest('/api/registrations', {
         headers: {
@@ -215,7 +215,7 @@ export default function Admin() {
     onError: (error: Error) => setError(error.message),
   });
 
-  // Contact message mutation
+  // Contact message mutation - FIXED
   const deleteContactMessageMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
       method: 'DELETE',
@@ -224,13 +224,15 @@ export default function Admin() {
       },
     }),
     onSuccess: () => {
+      // Invalidate and refetch contact messages
       queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
+      refetchContacts(); // Force immediate refetch
       setError("");
     },
     onError: (error: Error) => setError(error.message),
   });
 
-  // Registration mutation
+  // Registration mutation - FIXED
   const deleteRegistrationMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/registrations/${id}`, {
       method: 'DELETE',
@@ -239,7 +241,9 @@ export default function Admin() {
       },
     }),
     onSuccess: () => {
+      // Invalidate and refetch registrations
       queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      refetchRegistrations(); // Force immediate refetch
       setError("");
     },
     onError: (error: Error) => setError(error.message),
@@ -602,85 +606,85 @@ export default function Admin() {
             </div>
           </TabsContent>
 
-          {/* Registration Requests Tab - FIXED */}
-<TabsContent value="registrations" className="space-y-4">
-  <div className="flex justify-between items-center">
-    <h2 className="text-2xl font-semibold">Registration Requests</h2>
-    <div className="flex items-center gap-4">
-      <div className="text-sm text-muted-foreground">
-        {registrations.length} registration{registrations.length !== 1 ? 's' : ''}
-      </div>
-      <Button 
-        size="sm" 
-        onClick={() => refetchRegistrations()} 
-        disabled={!adminPassword || isFetchingRegistrations}
-      >
-        <Users className="mr-2 h-4 w-4" />
-        {isFetchingRegistrations ? 'Loading...' : 'Load Registrations'}
-      </Button>
-    </div>
-  </div>
-
-  <div className="grid gap-4">
-    {registrations.length === 0 ? (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">
-            {!adminPassword 
-              ? 'Enter admin password and click "Load Registrations"' 
-              : isFetchingRegistrations 
-                ? 'Loading registrations...' 
-                : 'No registration requests yet.'
-            }
-          </p>
-        </CardContent>
-      </Card>
-    ) : (
-      registrations.map((registration) => (
-        <Card key={registration.id} className="relative">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-start">
-              <div>
-                <span className="text-lg">{registration.name}</span>
-                <p className="text-sm font-normal text-muted-foreground mt-1">
-                  {registration.phone}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => deleteRegistrationMutation.mutate(registration.id)}
-                  disabled={!adminPassword}
+          {/* Registration Requests Tab */}
+          <TabsContent value="registrations" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Registration Requests</h2>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {registrations.length} registration{registrations.length !== 1 ? 's' : ''}
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => refetchRegistrations()} 
+                  disabled={!adminPassword || isFetchingRegistrations}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Users className="mr-2 h-4 w-4" />
+                  {isFetchingRegistrations ? 'Loading...' : 'Load Registrations'}
                 </Button>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm"><strong>Roll Number:</strong> {registration.roll_number}</p>
-                <p className="text-sm"><strong>Department:</strong> {registration.department}</p>
-              </div>
-              <div>
-                <p className="text-sm"><strong>Event:</strong></p>
-                <p className="text-sm text-muted-foreground">{registration.event_title}</p>
-              </div>
             </div>
-            <div className="flex justify-between items-center mt-4 pt-4 border-t">
-              <p className="text-xs text-muted-foreground">
-                Registered: {new Date(registration.created_at).toLocaleDateString()} at{' '}
-                {new Date(registration.created_at).toLocaleTimeString()}
-              </p>
+
+            <div className="grid gap-4">
+              {registrations.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <p className="text-muted-foreground">
+                      {!adminPassword 
+                        ? 'Enter admin password and click "Load Registrations"' 
+                        : isFetchingRegistrations 
+                          ? 'Loading registrations...' 
+                          : 'No registration requests yet.'
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                registrations.map((registration) => (
+                  <Card key={registration.id} className="relative">
+                    <CardHeader>
+                      <CardTitle className="flex justify-between items-start">
+                        <div>
+                          <span className="text-lg">{registration.name}</span>
+                          <p className="text-sm font-normal text-muted-foreground mt-1">
+                            {registration.phone}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteRegistrationMutation.mutate(registration.id)}
+                            disabled={!adminPassword}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm"><strong>Roll Number:</strong> {registration.roll_number}</p>
+                          <p className="text-sm"><strong>Department:</strong> {registration.department}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm"><strong>Event:</strong></p>
+                          <p className="text-sm text-muted-foreground">{registration.event_title}</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          Registered: {new Date(registration.created_at).toLocaleDateString()} at{' '}
+                          {new Date(registration.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
-          </CardContent>
-        </Card>
-      ))
-    )}
-  </div>
-</TabsContent>
+          </TabsContent>
 
           {/* Contact Messages Tab */}
           <TabsContent value="contact" className="space-y-4">
