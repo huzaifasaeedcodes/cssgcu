@@ -8,8 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash2, Edit, Mail } from "lucide-react";
-import type { Event, TeamMember, Announcement, ContactMessage } from "@shared/schema";
+import { Plus, Trash2, Edit, Mail, Users } from "lucide-react";
+import type { Event, TeamMember, Announcement, ContactMessage, Registration } from "@shared/schema";
 
 async function apiRequest(url: string, options: RequestInit = {}) {
   const response = await fetch(url, {
@@ -18,7 +18,7 @@ async function apiRequest(url: string, options: RequestInit = {}) {
       'Content-Type': 'application/json',
       ...options.headers,
     },
-    credentials: 'include', // Add this line
+    credentials: 'include',
   });
   
   if (!response.ok) {
@@ -49,6 +49,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const queryClient = useQueryClient();
 
+  // Queries
   const { data: events = [] } = useQuery<Event[]>({
     queryKey: ['events'],
     queryFn: () => apiRequest('/api/events'),
@@ -64,21 +65,36 @@ export default function Admin() {
     queryFn: () => apiRequest('/api/announcements'),
   });
 
-// Contact Messages Query - FIXED
-const {
-  data: contactMessages = [],
-  refetch: refetchContacts,
-  isFetching: isFetchingContacts,
-} = useQuery<ContactMessage[]>({
-  queryKey: ['contactMessages', adminPassword],
-  queryFn: () =>
-    apiRequest('/api/contact', {
-      headers: {
-        'x-admin-password': adminPassword,
-      },
-    }),
-  enabled: false,
-});
+  const {
+    data: contactMessages = [],
+    refetch: refetchContacts,
+    isFetching: isFetchingContacts,
+  } = useQuery<ContactMessage[]>({
+    queryKey: ['contactMessages', adminPassword],
+    queryFn: () =>
+      apiRequest('/api/contact', {
+        headers: {
+          'x-admin-password': adminPassword,
+        },
+      }),
+    enabled: false,
+  });
+
+  const {
+    data: registrations = [],
+    refetch: refetchRegistrations,
+    isFetching: isFetchingRegistrations,
+  } = useQuery<Registration[]>({
+    queryKey: ['registrations', adminPassword],
+    queryFn: () =>
+      apiRequest('/api/registrations', {
+        headers: {
+          'x-admin-password': adminPassword,
+        },
+      }),
+    enabled: false,
+  });
+
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/events', {
@@ -159,61 +175,77 @@ const {
     onError: (error: Error) => setError(error.message),
   });
 
-  // Announcement mutations - FIXED
-const createAnnouncementMutation = useMutation({
-  mutationFn: (data: any) => apiRequest('/api/announcements', {
-    method: 'POST',
-    body: JSON.stringify({ ...data, adminPassword }),
-  }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['announcements'] });
-    setShowAnnouncementForm(false);
-    setError("");
-  },
-  onError: (error: Error) => setError(error.message),
-});
-
-const updateAnnouncementMutation = useMutation({
-  mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest(`/api/announcements/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...data, adminPassword }),
-  }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['announcements'] });
-    setShowAnnouncementForm(false);
-    setEditingAnnouncement(null);
-    setError("");
-  },
-  onError: (error: Error) => setError(error.message),
-});
-
-const deleteAnnouncementMutation = useMutation({
-  mutationFn: (id: string) => apiRequest(`/api/announcements/${id}`, {
-    method: 'DELETE',
-    body: JSON.stringify({ adminPassword }),
-  }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['announcements'] });
-    setError("");
-  },
-  onError: (error: Error) => setError(error.message),
-});
-
-// Contact message mutation - FIXED
-const deleteContactMessageMutation = useMutation({
-  mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'x-admin-password': adminPassword,
+  // Announcement mutations
+  const createAnnouncementMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('/api/announcements', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, adminPassword }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setShowAnnouncementForm(false);
+      setError("");
     },
-  }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
-    setError("");
-  },
-  onError: (error: Error) => setError(error.message),
-});
+    onError: (error: Error) => setError(error.message),
+  });
 
+  const updateAnnouncementMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest(`/api/announcements/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...data, adminPassword }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setShowAnnouncementForm(false);
+      setEditingAnnouncement(null);
+      setError("");
+    },
+    onError: (error: Error) => setError(error.message),
+  });
+
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/announcements/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ adminPassword }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setError("");
+    },
+    onError: (error: Error) => setError(error.message),
+  });
+
+  // Contact message mutation
+  const deleteContactMessageMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-admin-password': adminPassword,
+      },
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
+      setError("");
+    },
+    onError: (error: Error) => setError(error.message),
+  });
+
+  // Registration mutation
+  const deleteRegistrationMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/registrations/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-admin-password': adminPassword,
+      },
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      setError("");
+    },
+    onError: (error: Error) => setError(error.message),
+  });
+
+  // Form handlers
   const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -253,21 +285,21 @@ const deleteContactMessageMutation = useMutation({
   };
 
   const handleAnnouncementSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  const formData = new FormData(e.currentTarget);
-  const data = {
-    title: formData.get('title') as string,
-    content: formData.get('content') as string,
-    type: formData.get('type') as string,
-    date: formData.get('date') as string,
-  };
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: formData.get('title') as string,
+      content: formData.get('content') as string,
+      type: formData.get('type') as string,
+      date: formData.get('date') as string,
+    };
 
-  if (editingAnnouncement) {
-    updateAnnouncementMutation.mutate({ id: editingAnnouncement.id, data });
-  } else {
-    createAnnouncementMutation.mutate(data);
-  }
-};
+    if (editingAnnouncement) {
+      updateAnnouncementMutation.mutate({ id: editingAnnouncement.id, data });
+    } else {
+      createAnnouncementMutation.mutate(data);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -298,9 +330,11 @@ const deleteContactMessageMutation = useMutation({
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="announcements">Announcements</TabsTrigger>
             <TabsTrigger value="team">Team Members</TabsTrigger>
+            <TabsTrigger value="registrations">Registration Requests</TabsTrigger>
             <TabsTrigger value="contact">Contact Messages</TabsTrigger>
           </TabsList>
 
+          {/* Events Tab */}
           <TabsContent value="events" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Manage Events</h2>
@@ -379,12 +413,24 @@ const deleteContactMessageMutation = useMutation({
                     <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
                     <p className="text-sm"><strong>Date:</strong> {event.date}</p>
                     <p className="text-sm"><strong>Location:</strong> {event.location}</p>
+                    {event.image && (
+                      <p className="text-sm"><strong>Image:</strong> {event.image}</p>
+                    )}
+                    {event.registrationLink && (
+                      <p className="text-sm">
+                        <strong>Registration:</strong>{' '}
+                        <a href={event.registrationLink} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+                          {event.registrationLink}
+                        </a>
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
+          {/* Announcements Tab */}
           <TabsContent value="announcements" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Manage Announcements</h2>
@@ -461,6 +507,7 @@ const deleteContactMessageMutation = useMutation({
             </div>
           </TabsContent>
 
+          {/* Team Members Tab */}
           <TabsContent value="team" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Manage Team Members</h2>
@@ -538,45 +585,137 @@ const deleteContactMessageMutation = useMutation({
                   <CardContent>
                     <p className="text-sm"><strong>Role:</strong> {member.role}</p>
                     {member.bio && <p className="text-sm text-muted-foreground mt-2">{member.bio}</p>}
+                    {member.image && (
+                      <p className="text-sm mt-2">
+                        <strong>Image:</strong> {member.image}
+                      </p>
+                    )}
+                    {member.socialLinks && (
+                      <p className="text-sm mt-2">
+                        <strong>Social Links:</strong> {member.socialLinks}
+                      </p>
+                    )}
+                    <p className="text-sm mt-2"><strong>Order:</strong> {member.order}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
-<TabsContent value="contact" className="space-y-4">
+          {/* Registration Requests Tab - FIXED */}
+<TabsContent value="registrations" className="space-y-4">
   <div className="flex justify-between items-center">
-    <h2 className="text-2xl font-semibold">Contact Messages</h2>
+    <h2 className="text-2xl font-semibold">Registration Requests</h2>
     <div className="flex items-center gap-4">
       <div className="text-sm text-muted-foreground">
-        {contactMessages.length} message{contactMessages.length !== 1 ? 's' : ''}
+        {registrations.length} registration{registrations.length !== 1 ? 's' : ''}
       </div>
       <Button 
         size="sm" 
-        onClick={() => refetchContacts()} 
-        disabled={!adminPassword || isFetchingContacts}
+        onClick={() => refetchRegistrations()} 
+        disabled={!adminPassword || isFetchingRegistrations}
       >
-        {isFetchingContacts ? 'Loading...' : 'Load Messages'}
+        <Users className="mr-2 h-4 w-4" />
+        {isFetchingRegistrations ? 'Loading...' : 'Load Registrations'}
       </Button>
     </div>
   </div>
 
   <div className="grid gap-4">
-    {contactMessages.length === 0 ? (
+    {registrations.length === 0 ? (
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-muted-foreground">
             {!adminPassword 
-              ? 'Enter admin password and click "Load Messages"' 
-              : isFetchingContacts 
-                ? 'Loading messages...' 
-                : 'No contact messages yet.'
+              ? 'Enter admin password and click "Load Registrations"' 
+              : isFetchingRegistrations 
+                ? 'Loading registrations...' 
+                : 'No registration requests yet.'
             }
           </p>
         </CardContent>
       </Card>
     ) : (
-      contactMessages.map((message) => (
+      registrations.map((registration) => (
+        <Card key={registration.id} className="relative">
+          <CardHeader>
+            <CardTitle className="flex justify-between items-start">
+              <div>
+                <span className="text-lg">{registration.name}</span>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  {registration.phone}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => deleteRegistrationMutation.mutate(registration.id)}
+                  disabled={!adminPassword}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm"><strong>Roll Number:</strong> {registration.roll_number}</p>
+                <p className="text-sm"><strong>Department:</strong> {registration.department}</p>
+              </div>
+              <div>
+                <p className="text-sm"><strong>Event:</strong></p>
+                <p className="text-sm text-muted-foreground">{registration.event_title}</p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground">
+                Registered: {new Date(registration.created_at).toLocaleDateString()} at{' '}
+                {new Date(registration.created_at).toLocaleTimeString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ))
+    )}
+  </div>
+</TabsContent>
+
+          {/* Contact Messages Tab */}
+          <TabsContent value="contact" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">Contact Messages</h2>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {contactMessages.length} message{contactMessages.length !== 1 ? 's' : ''}
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => refetchContacts()} 
+                  disabled={!adminPassword || isFetchingContacts}
+                >
+                  {isFetchingContacts ? 'Loading...' : 'Load Messages'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {contactMessages.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <p className="text-muted-foreground">
+                      {!adminPassword 
+                        ? 'Enter admin password and click "Load Messages"' 
+                        : isFetchingContacts 
+                          ? 'Loading messages...' 
+                          : 'No contact messages yet.'
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                contactMessages.map((message) => (
                   <Card key={message.id} className="relative">
                     <CardHeader>
                       <CardTitle className="flex justify-between items-start">
@@ -603,27 +742,26 @@ const deleteContactMessageMutation = useMutation({
                         </div>
                       </CardTitle>
                     </CardHeader>
-                  <CardContent>
-            <p className="text-sm text-foreground whitespace-pre-wrap">{message.message}</p>
-            <div className="flex justify-between items-center mt-4 pt-4 border-t">
-              <p className="text-xs text-muted-foreground">
-                Received: {new Date(message.createdAt).toLocaleDateString()} at{' '}
-                {new Date(message.createdAt).toLocaleTimeString()}
-              </p>
-              <a
-                href={`mailto:${message.email}?subject=Re: Your message to CSS GCU&body=Dear ${message.name},%0D%0A%0D%0AThank you for your message...`}
-                className="text-xs text-blue-600 hover:text-blue-800"
-              >
-                Reply via Email
-              </a>
+                    <CardContent>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{message.message}</p>
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          Received: {new Date(message.createdAt).toLocaleDateString()} at{' '}
+                          {new Date(message.createdAt).toLocaleTimeString()}
+                        </p>
+                        <a
+                          href={`mailto:${message.email}?subject=Re: Your message to CSS GCU&body=Dear ${message.name},%0D%0A%0D%0AThank you for your message...`}
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          Reply via Email
+                        </a>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
-          </CardContent>
-        </Card>
-      ))
-    )}
-  </div>
-</TabsContent>
-
+          </TabsContent>
         </Tabs>
       </div>
     </div>

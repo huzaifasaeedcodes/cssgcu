@@ -3,11 +3,11 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import * as dotenv from 'dotenv';
-import { insertEventSchema, insertTeamMemberSchema, insertAnnouncementSchema,insertRegistrationSchema } from "@shared/schema";
+import { insertEventSchema, insertTeamMemberSchema, insertAnnouncementSchema, insertRegistrationSchema } from "@shared/schema";
 import { insertContactMessageSchema } from "@shared/schema";
 dotenv.config();
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 function verifyAdminPassword(req: any, res: any, next: any) {
   let adminPassword;
@@ -32,7 +32,7 @@ function verifyAdminPassword(req: any, res: any, next: any) {
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.json());
 
-
+  // Events routes
   app.get("/api/events", async (req, res) => {
     try {
       const events = await storage.getAllEvents();
@@ -91,6 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team members routes
   app.get("/api/team-members", async (req, res) => {
     try {
       const members = await storage.getAllTeamMembers();
@@ -149,6 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Announcements routes
   app.get("/api/announcements", async (req, res) => {
     try {
       const announcements = await storage.getAllAnnouncements();
@@ -207,7 +209,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/registrations", async (req, res) => {
+  // Registrations routes
+  app.get("/api/registrations", verifyAdminPassword, async (req, res) => {
     try {
       const registrations = await storage.getAllRegistrations();
       res.json(registrations);
@@ -216,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/registrations/:id", async (req, res) => {
+  app.get("/api/registrations/:id", verifyAdminPassword, async (req, res) => {
     try {
       const registration = await storage.getRegistration(req.params.id);
       if (!registration) {
@@ -228,66 +231,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
- app.post("/api/registrations", async (req, res) => {
-  try {
-    const validated = insertRegistrationSchema.parse(req.body);
+  app.post("/api/registrations", async (req, res) => {
+    try {
+      const validated = insertRegistrationSchema.parse(req.body);
+      const registration = await storage.createRegistration(validated);
+      res.status(201).json(registration);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Invalid registration data" });
+    }
+  });
 
-    const registration = await storage.createRegistration(validated);
-    res.status(201).json(registration);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message || "Invalid registration data" });
-  }
-});
+  app.delete("/api/registrations/:id", verifyAdminPassword, async (req, res) => {
+    try {
+      const success = await storage.deleteRegistration(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Registration not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete registration" });
+    }
+  });
 
+  // Contact routes
   app.post("/api/contact", async (req, res) => {
-  try {
-    const validated = insertContactMessageSchema.parse(req.body);
-    const contactMessage = await storage.createContactMessage(validated);
-    res.status(201).json(contactMessage);
-  } catch (error) {
-    console.error("Contact form error:", error);
-    res.status(400).json({ error: "Invalid contact message data" });
-  }
-});
-
-app.get("/api/contact", verifyAdminPassword, async (req, res) => {
-  try {
-    const messages = await storage.getAllContactMessages();
-    res.json(messages);
-  } catch (error) {
-    console.error("Failed to fetch contact messages:", error);
-    res.status(500).json({ error: "Failed to fetch contact messages" });
-  }
-});
-
-app.get("/api/contact/:id", verifyAdminPassword, async (req, res) => {
-  try {
-    const message = await storage.getContactMessage(req.params.id);
-    if (!message) {
-      return res.status(404).json({ error: "Contact message not found" });
+    try {
+      const validated = insertContactMessageSchema.parse(req.body);
+      const contactMessage = await storage.createContactMessage(validated);
+      res.status(201).json(contactMessage);
+    } catch (error) {
+      console.error("Contact form error:", error);
+      res.status(400).json({ error: "Invalid contact message data" });
     }
-    res.json(message);
-  } catch (error) {
-    console.error("Failed to fetch contact message:", error);
-    res.status(500).json({ error: "Failed to fetch contact message" });
-  }
-});
+  });
 
-app.delete("/api/contact/:id", verifyAdminPassword, async (req, res) => {
-  try {
-    const success = await storage.deleteContactMessage(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: "Contact message not found" });
+  app.get("/api/contact", verifyAdminPassword, async (req, res) => {
+    try {
+      const messages = await storage.getAllContactMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error("Failed to fetch contact messages:", error);
+      res.status(500).json({ error: "Failed to fetch contact messages" });
     }
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Failed to delete contact message:", error);
-    res.status(500).json({ error: "Failed to delete contact message" });
-  }
-});
+  });
 
+  app.get("/api/contact/:id", verifyAdminPassword, async (req, res) => {
+    try {
+      const message = await storage.getContactMessage(req.params.id);
+      if (!message) {
+        return res.status(404).json({ error: "Contact message not found" });
+      }
+      res.json(message);
+    } catch (error) {
+      console.error("Failed to fetch contact message:", error);
+      res.status(500).json({ error: "Failed to fetch contact message" });
+    }
+  });
+
+  app.delete("/api/contact/:id", verifyAdminPassword, async (req, res) => {
+    try {
+      const success = await storage.deleteContactMessage(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Contact message not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete contact message:", error);
+      res.status(500).json({ error: "Failed to delete contact message" });
+    }
+  });
 
   const httpServer = createServer(app);
-
   return httpServer;
 }

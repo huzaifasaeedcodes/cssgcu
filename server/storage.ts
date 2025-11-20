@@ -22,7 +22,7 @@ import {
   announcements,
   registrations,
   messages,
-  contactMessages, // Add this import
+  contactMessages,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -56,6 +56,7 @@ export interface IStorage {
   getAllRegistrations(): Promise<Registration[]>;
   getRegistration(id: string): Promise<Registration | undefined>;
   createRegistration(registration: InsertRegistration): Promise<Registration>;
+  deleteRegistration(id: string): Promise<boolean>; // ADD THIS METHOD
 
   // Messages
   getMessage(id: string): Promise<Message | undefined>;
@@ -177,34 +178,40 @@ export class DatabaseStorage implements IStorage {
     return true;
   }
 
- // =================== Registrations ===================
-// =================== Registrations ===================
-// Add this in DatabaseStorage
-async getAllRegistrations(): Promise<Registration[]> {
-  return await db.select().from(registrations);
-}
-
-async getRegistration(id: string): Promise<Registration | undefined> {
-  const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
-  return result[0] as Registration | undefined;
-}
-
-async createRegistration(registration: InsertRegistration): Promise<Registration> {
-  // Ensure event_title exists
-  if (!registration.event_title || !registration.event_title.trim()) {
-    throw new Error("Event title is required");
+  // =================== Registrations ===================
+  async getAllRegistrations(): Promise<Registration[]> {
+    return await db.select().from(registrations);
   }
 
-  const newRegistration = { 
-    ...registration, 
-    id: uuidv4(), 
-    created_at: new Date(), 
-    updated_at: new Date() 
-  };
+  async getRegistration(id: string): Promise<Registration | undefined> {
+    const result = await db.select().from(registrations).where(eq(registrations.id, id)).limit(1);
+    return result[0] as Registration | undefined;
+  }
 
-  await db.insert(registrations).values(newRegistration);
-  return newRegistration as Registration;
-}
+  async createRegistration(registration: InsertRegistration): Promise<Registration> {
+    // Ensure event_title exists
+    if (!registration.event_title || !registration.event_title.trim()) {
+      throw new Error("Event title is required");
+    }
+
+    const newRegistration = { 
+      ...registration, 
+      id: uuidv4(), 
+      created_at: new Date(), 
+      updated_at: new Date() 
+    };
+
+    await db.insert(registrations).values(newRegistration);
+    return newRegistration as Registration;
+  }
+
+  // ADD THIS METHOD - Delete Registration
+  async deleteRegistration(id: string): Promise<boolean> {
+    const existing = await this.getRegistration(id);
+    if (!existing) return false;
+    await db.delete(registrations).where(eq(registrations.id, id));
+    return true;
+  }
 
   // =================== Messages ===================
   async getMessage(id: string): Promise<Message | undefined> {
