@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { TeamMember } from "@shared/schema";
-import styles from "./Team.module.css";
+import styles from "@/components/ui/Team.module.css";
 
 // Fetch team members from API
 async function fetchTeamMembers() {

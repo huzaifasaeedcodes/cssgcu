@@ -1,3 +1,9 @@
+.marquee-container {
+  overflow: hidden;
+  width: 150%;
+
+}
+
 .animateMarquee {
   display: flex;
   width: max-content;

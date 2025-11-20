@@ -18,11 +18,21 @@ async function apiRequest(url: string, options: RequestInit = {}) {
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    credentials: 'include', // Add this line
   });
   
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'API request failed');
+    const errorText = await response.text();
+    let errorMessage = 'API request failed';
+    
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    
+    throw new Error(errorMessage);
   }
   
   return response.json();
@@ -54,12 +64,21 @@ export default function Admin() {
     queryFn: () => apiRequest('/api/announcements'),
   });
 
-  // Contact messages query
-  const { data: contactMessages = [] } = useQuery<ContactMessage[]>({
-    queryKey: ['contactMessages'],
-    queryFn: () => apiRequest('/api/contact'),
-  });
-
+// Contact Messages Query - FIXED
+const {
+  data: contactMessages = [],
+  refetch: refetchContacts,
+  isFetching: isFetchingContacts,
+} = useQuery<ContactMessage[]>({
+  queryKey: ['contactMessages', adminPassword],
+  queryFn: () =>
+    apiRequest('/api/contact', {
+      headers: {
+        'x-admin-password': adminPassword,
+      },
+    }),
+  enabled: false,
+});
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (data: any) => apiRequest('/api/events', {
@@ -140,58 +159,60 @@ export default function Admin() {
     onError: (error: Error) => setError(error.message),
   });
 
-  // Announcement mutations
-  const createAnnouncementMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/announcements', {
-      method: 'POST',
-      body: JSON.stringify({ ...data, adminPassword }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      setShowAnnouncementForm(false);
-      setError("");
-    },
-    onError: (error: Error) => setError(error.message),
-  });
+  // Announcement mutations - FIXED
+const createAnnouncementMutation = useMutation({
+  mutationFn: (data: any) => apiRequest('/api/announcements', {
+    method: 'POST',
+    body: JSON.stringify({ ...data, adminPassword }),
+  }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    setShowAnnouncementForm(false);
+    setError("");
+  },
+  onError: (error: Error) => setError(error.message),
+});
 
-  const updateAnnouncementMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest(`/api/announcements/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ ...data, adminPassword }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      setShowAnnouncementForm(false);
-      setEditingAnnouncement(null);
-      setError("");
-    },
-    onError: (error: Error) => setError(error.message),
-  });
+const updateAnnouncementMutation = useMutation({
+  mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest(`/api/announcements/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...data, adminPassword }),
+  }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    setShowAnnouncementForm(false);
+    setEditingAnnouncement(null);
+    setError("");
+  },
+  onError: (error: Error) => setError(error.message),
+});
 
-  const deleteAnnouncementMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/announcements/${id}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ adminPassword }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      setError("");
-    },
-    onError: (error: Error) => setError(error.message),
-  });
+const deleteAnnouncementMutation = useMutation({
+  mutationFn: (id: string) => apiRequest(`/api/announcements/${id}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ adminPassword }),
+  }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    setError("");
+  },
+  onError: (error: Error) => setError(error.message),
+});
 
-  // Contact message mutation
-  const deleteContactMessageMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ adminPassword }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
-      setError("");
+// Contact message mutation - FIXED
+const deleteContactMessageMutation = useMutation({
+  mutationFn: (id: string) => apiRequest(`/api/contact/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'x-admin-password': adminPassword,
     },
-    onError: (error: Error) => setError(error.message),
-  });
+  }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
+    setError("");
+  },
+  onError: (error: Error) => setError(error.message),
+});
 
   const handleEventSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -232,21 +253,21 @@ export default function Admin() {
   };
 
   const handleAnnouncementSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      title: formData.get('title') as string,
-      content: formData.get('content') as string,
-      type: formData.get('type') as string,
-      date: formData.get('date') as string,
-    };
-
-    if (editingAnnouncement) {
-      updateAnnouncementMutation.mutate({ id: editingAnnouncement.id, data });
-    } else {
-      createAnnouncementMutation.mutate(data);
-    }
+  e.preventDefault();
+  const formData = new FormData(e.currentTarget);
+  const data = {
+    title: formData.get('title') as string,
+    content: formData.get('content') as string,
+    type: formData.get('type') as string,
+    date: formData.get('date') as string,
   };
+
+  if (editingAnnouncement) {
+    updateAnnouncementMutation.mutate({ id: editingAnnouncement.id, data });
+  } else {
+    createAnnouncementMutation.mutate(data);
+  }
+};
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -523,23 +544,39 @@ export default function Admin() {
             </div>
           </TabsContent>
 
-          <TabsContent value="contact" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Contact Messages</h2>
-              <div className="text-sm text-muted-foreground">
-                {contactMessages.length} message{contactMessages.length !== 1 ? 's' : ''}
-              </div>
-            </div>
+<TabsContent value="contact" className="space-y-4">
+  <div className="flex justify-between items-center">
+    <h2 className="text-2xl font-semibold">Contact Messages</h2>
+    <div className="flex items-center gap-4">
+      <div className="text-sm text-muted-foreground">
+        {contactMessages.length} message{contactMessages.length !== 1 ? 's' : ''}
+      </div>
+      <Button 
+        size="sm" 
+        onClick={() => refetchContacts()} 
+        disabled={!adminPassword || isFetchingContacts}
+      >
+        {isFetchingContacts ? 'Loading...' : 'Load Messages'}
+      </Button>
+    </div>
+  </div>
 
-            <div className="grid gap-4">
-              {contactMessages.length === 0 ? (
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <p className="text-muted-foreground">No contact messages yet.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                contactMessages.map((message) => (
+  <div className="grid gap-4">
+    {contactMessages.length === 0 ? (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">
+            {!adminPassword 
+              ? 'Enter admin password and click "Load Messages"' 
+              : isFetchingContacts 
+                ? 'Loading messages...' 
+                : 'No contact messages yet.'
+            }
+          </p>
+        </CardContent>
+      </Card>
+    ) : (
+      contactMessages.map((message) => (
                   <Card key={message.id} className="relative">
                     <CardHeader>
                       <CardTitle className="flex justify-between items-start">
@@ -550,11 +587,7 @@ export default function Admin() {
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                          >
+                          <Button size="sm" variant="outline" asChild>
                             <a href={`mailto:${message.email}`}>
                               <Mail className="h-4 w-4" />
                             </a>
@@ -570,26 +603,27 @@ export default function Admin() {
                         </div>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{message.message}</p>
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                        <p className="text-xs text-muted-foreground">
-                          Received: {new Date(message.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(message.createdAt).toLocaleTimeString()}
-                        </p>
-                        <a 
-                          href={`mailto:${message.email}?subject=Re: Your message to CSS GCU&body=Dear ${message.name},%0D%0A%0D%0AThank you for your message...`}
-                          className="text-xs text-blue-600 hover:text-blue-800"
-                        >
-                          Reply via Email
-                        </a>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+                  <CardContent>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{message.message}</p>
+            <div className="flex justify-between items-center mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground">
+                Received: {new Date(message.createdAt).toLocaleDateString()} at{' '}
+                {new Date(message.createdAt).toLocaleTimeString()}
+              </p>
+              <a
+                href={`mailto:${message.email}?subject=Re: Your message to CSS GCU&body=Dear ${message.name},%0D%0A%0D%0AThank you for your message...`}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Reply via Email
+              </a>
             </div>
-          </TabsContent>
+          </CardContent>
+        </Card>
+      ))
+    )}
+  </div>
+</TabsContent>
+
         </Tabs>
       </div>
     </div>

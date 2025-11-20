@@ -2,21 +2,30 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import * as dotenv from 'dotenv';
 import { insertEventSchema, insertTeamMemberSchema, insertAnnouncementSchema,insertRegistrationSchema } from "@shared/schema";
 import { insertContactMessageSchema } from "@shared/schema";
+dotenv.config();
 
-
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 function verifyAdminPassword(req: any, res: any, next: any) {
-  const { adminPassword } = req.body;
+  let adminPassword;
   
-  if (!adminPassword || adminPassword !== ADMIN_PASSWORD) {
-    return res.status(403).json({ 
-      error: "Invalid admin password" 
-    });
+  if (req.method === 'GET') {
+    adminPassword = req.headers['x-admin-password'];
+  } else {
+    adminPassword = req.body.adminPassword || req.headers['x-admin-password'];
   }
   
+  if (!adminPassword) {
+    return res.status(403).json({ error: "Admin password required" });
+  }
+  
+  if (adminPassword !== ADMIN_PASSWORD) {
+    return res.status(403).json({ error: "Invalid admin password" });
+  }
+
   next();
 }
 
