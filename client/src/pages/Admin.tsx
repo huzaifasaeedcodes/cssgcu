@@ -540,7 +540,7 @@ export default function Admin() {
                     </div>
                     <div>
                       <Label htmlFor="image">Image URL</Label>
-                      <Input id="image" name="image" defaultValue={editingMember?.image || ''} />
+                      <Input id="image" name="image" defaultValue={editingMember?.image || ''} placeholder="to insert image write same name like in assest prefer name like Hassan Ali.PNG"/>
                     </div>
                     <div>
                       <Label htmlFor="socialLinks">Social Links (JSON)</Label>
